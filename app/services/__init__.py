@@ -1,1 +1,3 @@
-from . import notifications\n__all__ = ['notifications']\n
+from . import notifications
+
+__all__ = ["notifications"]
