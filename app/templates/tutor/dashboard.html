@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% block title %}Tutor Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-0">Welcome, {{ tutor.name }}</h2>
+    <small class="text-muted">Phone: {{ format_phone(tutor.phone) }}</small>
+  </div>
+  <div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('tutor.logout') }}">Log out</a>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Upcoming Sessions</h5>
+        <small class="text-muted">Reach out directly if you need to make changes.</small>
+      </div>
+      <div class="card-body">
+        {% if upcoming_bookings %}
+          <ul class="list-group list-group-flush">
+            {% for booking in upcoming_bookings %}
+              <li class="list-group-item">
+                <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+                  <div>
+                    <div class="fw-semibold">{{ booking.start_time.strftime('%A, %b %d  -  %I:%M %p').lstrip('0') }}</div>
+                    <div class="text-muted">{{ booking.subject.name if booking.subject else 'General tutoring' }}</div>
+                    <div>Student: {{ booking.student_name }} &middot; {{ format_phone(booking.student_phone) }}</div>
+                  </div>
+                  <div class="text-end">
+                    <form method="post" action="{{ url_for('tutor.cancel_booking', booking_id=booking.id) }}" onsubmit="return confirm('Cancel this session?');" class="d-flex gap-2 justify-content-end">
+                      <input class="form-control form-control-sm" type="text" name="cancel_reason" placeholder="Optional note" maxlength="255">
+                      <button class="btn btn-sm btn-outline-danger" type="submit">Cancel</button>
+                    </form>
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mb-0">No upcoming bookings yet. When students reserve sessions they will appear here.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Subjects</h5>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('tutor.update_subjects') }}">
+          {% set selected_ids = tutor.subjects | map(attribute='id') | list %}
+          {% for category, items in grouped_subjects %}
+            <div class="mb-2">
+              <h6 class="fw-bold">{{ category }}</h6>
+              {% for subject in items %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="dash-subject-{{ subject.id }}" name="subjects" value="{{ subject.id }}" {% if subject.id in selected_ids %}checked{% endif %}>
+                  <label class="form-check-label" for="dash-subject-{{ subject.id }}">{{ subject.name }}</label>
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+          <div class="mt-3">
+            <button class="btn btn-primary" type="submit">Save Subjects</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Weekly Availability</h5>
+      </div>
+      <div class="card-body">
+        {% if availability_blocks %}
+          <ul class="list-group mb-3">
+            {% for availability in availability_blocks %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  {{ weekday_names[availability.day_of_week] }}:
+                  {{ availability.start_time.strftime('%I:%M %p').lstrip('0') }}
+                  &ndash;
+                  {{ availability.end_time.strftime('%I:%M %p').lstrip('0') }}
+                </div>
+                <form method="post" action="{{ url_for('tutor.delete_availability', availability_id=availability.id) }}">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No weekly availability yet.</p>
+        {% endif %}
+        <form method="post" action="{{ url_for('tutor.add_availability') }}" class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label" for="day_of_week">Day</label>
+            <select class="form-select" id="day_of_week" name="day_of_week" required>
+              {% for idx in range(weekday_names | length) %}
+                <option value="{{ idx }}">{{ weekday_names[idx] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="start_time">Start</label>
+            <input class="form-control" type="time" id="start_time" name="start_time" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="end_time">End</label>
+            <input class="form-control" type="time" id="end_time" name="end_time" required>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-outline-primary" type="submit">Add Availability</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Blackouts (Time Off)</h5>
+      </div>
+      <div class="card-body">
+        {% if exception_list %}
+          <ul class="list-group mb-3">
+            {% for exception in exception_list %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  {{ exception.date.strftime('%B %d, %Y') }}
+                  {% if exception.is_full_day() %}
+                    <span class="badge bg-secondary ms-1">Full day</span>
+                  {% else %}
+                    <span class="badge bg-secondary ms-1">{{ exception.start_time.strftime('%I:%M %p').lstrip('0') }} &ndash; {{ exception.end_time.strftime('%I:%M %p').lstrip('0') }}</span>
+                  {% endif %}
+                  {% if exception.note %}
+                    <div class="text-muted small">{{ exception.note }}</div>
+                  {% endif %}
+                </div>
+                <form method="post" action="{{ url_for('tutor.delete_exception', exception_id=exception.id) }}">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No blackout periods set.</p>
+        {% endif %}
+        <form method="post" action="{{ url_for('tutor.add_exception') }}" class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label" for="exception_date">Date</label>
+            <input class="form-control" type="date" id="exception_date" name="date" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="exception_start">Start time (optional)</label>
+            <input class="form-control" type="time" id="exception_start" name="start_time">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="exception_end">End time (optional)</label>
+            <input class="form-control" type="time" id="exception_end" name="end_time">
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="exception_note">Note (optional)</label>
+            <input class="form-control" type="text" id="exception_note" name="note">
+          </div>
+          <div class="col-12">
+            <button class="btn btn-outline-primary" type="submit">Add Blackout</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% if recent_cancellations %}
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Recent Cancellations</h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            {% for booking in recent_cancellations %}
+              <li class="list-group-item">
+                <div class="fw-semibold">{{ booking.start_time.strftime('%b %d %I:%M %p').lstrip('0') }}</div>
+                <div>Student: {{ booking.student_name }} &middot; {{ format_phone(booking.student_phone) }}</div>
+                {% if booking.cancel_reason %}
+                  <div class="text-muted small">Reason: {{ booking.cancel_reason }}</div>
+                {% endif %}
+                <small class="text-muted">Canceled {{ booking.canceled_at.strftime('%b %d %I:%M %p').lstrip('0') if booking.canceled_at else '' }}</small>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

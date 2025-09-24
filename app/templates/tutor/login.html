@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Tutor Login{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Tutor Login</h4>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label" for="phone">Phone Number</label>
+            <input class="form-control" type="tel" id="phone" name="phone" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="pin">PIN / Password</label>
+            <input class="form-control" type="password" id="pin" name="pin" required>
+          </div>
+          <button class="btn btn-primary w-100" type="submit">Log In</button>
+        </form>
+      </div>
+      <div class="card-footer text-center">
+        <a href="{{ url_for('tutor.signup') }}">Need to create an account?</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

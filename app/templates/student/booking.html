@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Book a Session{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Book a Tutoring Session</h4>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">Select a subject, choose a time, and enter your contact details. Each session lasts {{ slot_minutes }} minutes. You may book multiple sessions if you need ongoing help.</p>
+        <form id="booking-form" method="post" action="{{ url_for('student.book') }}" data-availability-url="{{ url_for('student.availability') }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="student_name">Your Name</label>
+              <input class="form-control" type="text" id="student_name" name="student_name" value="{{ form_values.get('student_name', '') }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="student_phone">Phone Number</label>
+              <input class="form-control" type="tel" id="student_phone" name="student_phone" value="{{ form_values.get('student_phone', '') }}" required>
+            </div>
+            <div class="col-lg-6">
+              <label class="form-label" for="subject_id">Subject</label>
+              {% set selected_subject = form_values.get('subject_id', '') %}
+              <select class="form-select" id="subject_id" name="subject_id" required>
+                <option value="">Select a subject</option>
+                {% for category, items in grouped_subjects %}
+                  <optgroup label="{{ category }}">
+                    {% for subject in items %}
+                      <option value="{{ subject.id }}" {% if selected_subject and selected_subject|int == subject.id %}selected{% endif %}>{{ subject.name }}</option>
+                    {% endfor %}
+                  </optgroup>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-lg-6">
+              <label class="form-label" for="date">Preferred Date</label>
+              <input class="form-control" type="date" id="date" name="date" value="{{ form_values.get('date', earliest_date) }}" min="{{ earliest_date }}" required>
+            </div>
+            <div class="col-lg-6">
+              <label class="form-label" for="start_time">Available Times</label>
+              {% set selected_time = form_values.get('start_time', '') %}
+              <select class="form-select" id="start_time" name="start_time" data-selected="{{ selected_time }}" required>
+                <option value="" {% if not selected_time %}selected{% endif %} disabled>Select a subject and date first</option>
+              </select>
+              <div class="form-text" id="slot-status">Choose a subject and date to load available times.</div>
+            </div>
+            <div class="col-lg-6 d-flex align-items-end justify-content-lg-end">
+              <button class="btn btn-success mt-3 mt-lg-0" type="submit">Confirm Booking</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student_booking.js') }}?v=4"></script>
+{% endblock %}

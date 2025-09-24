@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Booking Confirmed{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-success text-white">
+        <h4 class="mb-0">Session Confirmed!</h4>
+      </div>
+      <div class="card-body">
+        <p class="lead">You're booked for <strong>{{ subject.name }}</strong> on <strong>{{ slot_label }}</strong>.</p>
+        <ul class="list-group list-group-flush mb-3">
+          <li class="list-group-item"><strong>Student:</strong> {{ booking.student_name }}</li>
+          <li class="list-group-item"><strong>Student Phone:</strong> {{ student_phone }}</li>
+          <li class="list-group-item"><strong>Your Tutor:</strong> {{ tutor.name }} &middot; {{ tutor_phone }}</li>
+        </ul>
+        <div class="alert alert-info" role="alert">
+          Your tutor will contact you using the phone number you provided. If they cancel, you are welcome to schedule another appointment. If you do not hear from them soon, feel free to reach out using the contact information above.
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('student.landing') }}">Book another session</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
