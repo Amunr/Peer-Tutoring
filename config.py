@@ -8,3 +8,4 @@ class Config:
     BOOKING_SLOT_MINUTES = int(os.environ.get('BOOKING_SLOT_MINUTES', '30'))
     TEXTBELT_API_KEY = os.environ.get('TEXTBELT_API_KEY', '')
     TEXTBELT_SENDER = os.environ.get('TEXTBELT_SENDER', 'PVHS Peer Tutoring')
+    TEXTBELT_URL = os.environ.get('TEXTBELT_URL', 'https://textbelt.com/text')
